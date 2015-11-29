@@ -1,6 +1,6 @@
 # HTTP Server w/ Context
 
-Example of using `context` package with HTTP Middleware in Golang
+Example of using [package context][1] with HTTP Middleware in Golang
 
 ## Usage
 
@@ -15,7 +15,10 @@ In another terminal cURL the endpoint:
 
 ## Credits
 
-This codebase was heavily inspired by the following talks and repositories:
+This codebase was heavily inspired by the following blog posts and repositories:
 
-* https://github.com/alexedwards/stack
+* http://www.alexedwards.net/blog/making-and-using-middleware
 * https://joeshaw.org/net-context-and-http-handler/
+* https://github.com/alexedwards/stack
+
+[1]: https://godoc.org/golang.org/x/net/context
