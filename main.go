@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"log"
+	"net/http"
 
 	"github.com/harlow/go-middleware-context/ctxhttp"
 	"github.com/harlow/go-middleware-context/requestid"
@@ -23,8 +23,8 @@ func requestIDMiddleware(next ctxhttp.Handler) ctxhttp.Handler {
 func userIPMiddleware(next ctxhttp.Handler) ctxhttp.Handler {
 	return ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		if userIP, ok := userip.FromRequest(r); ok == nil {
-    	ctx = userip.NewContext(ctx, userIP)
-    }
+			ctx = userip.NewContext(ctx, userIP)
+		}
 		next.ServeHTTP(ctx, w, r)
 	})
 }
