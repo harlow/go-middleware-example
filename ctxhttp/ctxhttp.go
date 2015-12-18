@@ -7,12 +7,12 @@ import (
 )
 
 type Server struct {
-  context.Context
-  Handler
+	context.Context
+	Handler
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-  s.Handler.ServeHTTP(s.Context, w, r)
+	s.Handler.ServeHTTP(s.Context, w, r)
 }
 
 type Handler interface {
