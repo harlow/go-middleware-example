@@ -14,8 +14,9 @@ import (
 
 func requestIDMiddleware(next ctxhttp.Handler) ctxhttp.Handler {
 	return ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		requestID := requestid.FromRequest(r)
-		ctx = requestid.NewContext(ctx, requestID)
+		if reqID, ok := requestid.FromRequest(r); ok == nil {
+			ctx = requestid.NewContext(ctx, reqID)
+		}
 		next.ServeHTTP(ctx, w, r)
 	})
 }
