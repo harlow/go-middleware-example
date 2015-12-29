@@ -12,6 +12,15 @@ import (
 	"golang.org/x/net/context"
 )
 
+type Server struct {
+	context.Context
+	ctxhttp.Handler
+}
+
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.Handler.ServeHTTP(s.Context, w, r)
+}
+
 func requestIDMiddleware(next ctxhttp.Handler) ctxhttp.Handler {
 	return ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		if reqID, ok := requestid.FromRequest(r); ok == nil {
@@ -43,6 +52,6 @@ func main() {
 	handler = requestIDMiddleware(handler)
 
 	ctx := context.Background()
-	svc := &ctxhttp.Server{ctx, handler}
+	svc := &Server{ctx, handler}
 	log.Fatal(http.ListenAndServe(":8080", svc))
 }
