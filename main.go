@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/harlow/go-middleware-context/ctxhttp"
 	"github.com/harlow/go-middleware-context/requestid"
@@ -46,6 +47,12 @@ func requestHandler(ctx context.Context, w http.ResponseWriter, r *http.Request)
 }
 
 func main() {
+	port := os.Getenv("PORT")
+
+	if port == "" {
+		log.Fatal("$PORT must be set")
+	}
+
 	var handler ctxhttp.Handler
 	handler = ctxhttp.HandlerFunc(requestHandler)
 	handler = userIPMiddleware(handler)
@@ -53,5 +60,5 @@ func main() {
 
 	ctx := context.Background()
 	svc := &Server{ctx, handler}
-	log.Fatal(http.ListenAndServe(":8080", svc))
+	log.Fatal(http.ListenAndServe(":"+port, svc))
 }
