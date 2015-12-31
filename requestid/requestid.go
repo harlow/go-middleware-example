@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/harlow/go-middleware-context/Godeps/_workspace/src/golang.org/x/net/context"
+	"golang.org/x/net/context"
 )
 
 func FromRequest(req *http.Request) (string, error) {
