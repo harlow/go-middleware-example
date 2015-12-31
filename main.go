@@ -1,16 +1,24 @@
 package main
 
 import (
+	"expvar"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/harlow/go-middleware-context/ctxhttp"
 	"github.com/harlow/go-middleware-context/requestid"
 	"github.com/harlow/go-middleware-context/userip"
 
+	"github.com/paulbellamy/ratecounter"
 	"golang.org/x/net/context"
+)
+
+var (
+  counter        *ratecounter.RateCounter
+  hitsperminute = expvar.NewInt("hits_per_minute")
 )
 
 type Server struct {
@@ -31,6 +39,14 @@ func requestIDMiddleware(next ctxhttp.Handler) ctxhttp.Handler {
 	})
 }
 
+func requestCtrMiddleware(next ctxhttp.Handler) ctxhttp.Handler {
+	return ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		counter.Incr(1)
+		hitsperminute.Set(counter.Rate())
+		next.ServeHTTP(ctx, w, r)
+	})
+}
+
 func userIPMiddleware(next ctxhttp.Handler) ctxhttp.Handler {
 	return ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		if userIP, ok := userip.FromRequest(r); ok == nil {
@@ -47,6 +63,8 @@ func requestHandler(ctx context.Context, w http.ResponseWriter, r *http.Request)
 }
 
 func main() {
+	counter = ratecounter.NewRateCounter(1 * time.Minute)
+
 	port := os.Getenv("PORT")
 
 	if port == "" {
@@ -57,8 +75,11 @@ func main() {
 	handler = ctxhttp.HandlerFunc(requestHandler)
 	handler = userIPMiddleware(handler)
 	handler = requestIDMiddleware(handler)
+	handler = requestCtrMiddleware(handler)
 
 	ctx := context.Background()
 	svc := &Server{ctx, handler}
-	log.Fatal(http.ListenAndServe(":"+port, svc))
+
+	http.HandleFunc("/", svc.ServeHTTP)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
