@@ -9,7 +9,7 @@ import (
 	"github.com/harlow/go-middleware-context/requestid"
 	"github.com/harlow/go-middleware-context/userip"
 
-	"golang.org/x/net/context"
+	"github.com/harlow/go-middleware-context/Godeps/_workspace/src/golang.org/x/net/context"
 )
 
 type Server struct {

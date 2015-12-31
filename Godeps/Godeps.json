@@ -1,0 +1,10 @@
+{
+	"ImportPath": "github.com/harlow/go-middleware-context",
+	"GoVersion": "go1.5",
+	"Deps": [
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "1d9fd3b8333e891c0e7353e1adcfe8a612573033"
+		}
+	]
+}
