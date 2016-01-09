@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/harlow/go-middleware-context/ctxhttp"
+	"github.com/harlow/go-middleware-context/httpctx"
 	"github.com/harlow/go-middleware-context/requestid"
 	"github.com/harlow/go-middleware-context/userip"
 
@@ -23,15 +23,15 @@ var (
 
 type Server struct {
 	context.Context
-	ctxhttp.Handler
+	httpctx.Handler
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.Handler.ServeHTTP(s.Context, w, r)
 }
 
-func requestIDMiddleware(next ctxhttp.Handler) ctxhttp.Handler {
-	return ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func requestIDMiddleware(next httpctx.Handler) httpctx.Handler {
+	return httpctx.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		if reqID, ok := requestid.FromRequest(r); ok == nil {
 			ctx = requestid.NewContext(ctx, reqID)
 		}
@@ -39,16 +39,16 @@ func requestIDMiddleware(next ctxhttp.Handler) ctxhttp.Handler {
 	})
 }
 
-func requestCtrMiddleware(next ctxhttp.Handler) ctxhttp.Handler {
-	return ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func requestCtrMiddleware(next httpctx.Handler) httpctx.Handler {
+	return httpctx.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		counter.Incr(1)
 		hitsperminute.Set(counter.Rate())
 		next.ServeHTTP(ctx, w, r)
 	})
 }
 
-func userIPMiddleware(next ctxhttp.Handler) ctxhttp.Handler {
-	return ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func userIPMiddleware(next httpctx.Handler) httpctx.Handler {
+	return httpctx.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		if userIP, ok := userip.FromRequest(r); ok == nil {
 			ctx = userip.NewContext(ctx, userIP)
 		}
@@ -71,8 +71,8 @@ func main() {
 		log.Fatal("$PORT must be set")
 	}
 
-	var handler ctxhttp.Handler
-	handler = ctxhttp.HandlerFunc(requestHandler)
+	var handler httpctx.Handler
+	handler = httpctx.HandlerFunc(requestHandler)
 	handler = userIPMiddleware(handler)
 	handler = requestIDMiddleware(handler)
 	handler = requestCtrMiddleware(handler)
