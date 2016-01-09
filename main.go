@@ -8,10 +8,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/harlow/go-middleware-context/httpctx"
 	"github.com/harlow/go-middleware-context/requestid"
 	"github.com/harlow/go-middleware-context/userip"
 
+	"github.com/harlow/httpctx"
 	"github.com/paulbellamy/ratecounter"
 	"golang.org/x/net/context"
 )
