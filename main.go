@@ -39,7 +39,7 @@ func userIPMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func requestCtrMiddleware(next http.Handler) http.Handler {
+func metricsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		counter.Incr(1)
 		hitsperminute.Set(counter.Rate())
@@ -62,9 +62,12 @@ func main() {
 	}
 
 	handler := http.HandlerFunc(rootHandler)
-	http.Handle(
-		"/",
-		alice.New(userIPMiddleware, requestIDMiddleware, requestCtrMiddleware).Then(handler),
+	http.Handle("/",
+		alice.New(
+			userIPMiddleware,
+			requestIDMiddleware,
+			metricsMiddleware,
+		).Then(handler),
 	)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
