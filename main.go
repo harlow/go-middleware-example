@@ -10,6 +10,7 @@ import (
 
 	"github.com/harlow/go-middleware-example/requestid"
 	"github.com/harlow/go-middleware-example/userip"
+	"github.com/justinas/alice"
 	"github.com/paulbellamy/ratecounter"
 )
 
@@ -46,7 +47,7 @@ func requestCtrMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func reqHandler(w http.ResponseWriter, r *http.Request) {
+func rootHandler(w http.ResponseWriter, r *http.Request) {
 	reqID, _ := requestid.FromContext(r.Context())
 	userIP, _ := userip.FromContext(r.Context())
 	fmt.Fprintf(w, "Hello request: %s, from %s\n", reqID, userIP)
@@ -60,12 +61,10 @@ func main() {
 		log.Fatal("$PORT must be set")
 	}
 
-	var h http.Handler
-	h = http.HandlerFunc(reqHandler)
-	h = userIPMiddleware(h)
-	h = requestIDMiddleware(h)
-	h = requestCtrMiddleware(h)
-
-	http.Handle("/", h)
+	handler := http.HandlerFunc(rootHandler)
+	http.Handle(
+		"/",
+		alice.New(userIPMiddleware, requestIDMiddleware, requestCtrMiddleware).Then(handler),
+	)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
