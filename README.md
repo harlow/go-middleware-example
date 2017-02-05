@@ -18,7 +18,6 @@ In another terminal cURL the endpoint:
 This codebase was heavily inspired by the following blog posts and repositories:
 
 * http://www.alexedwards.net/blog/making-and-using-middleware
-* https://joeshaw.org/net-context-and-http-handler/
-* https://github.com/alexedwards/stack
+* https://github.com/justinas/alice
 
-[1]: https://godoc.org/golang.org/x/net/context
+[1]: https://golang.org/pkg/context/
