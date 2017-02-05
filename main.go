@@ -8,57 +8,47 @@ import (
 	"os"
 	"time"
 
-	"github.com/harlow/go-middleware-context/requestid"
-	"github.com/harlow/go-middleware-context/userip"
-
-	"github.com/harlow/httpctx"
+	"github.com/harlow/go-middleware-example/requestid"
+	"github.com/harlow/go-middleware-example/userip"
 	"github.com/paulbellamy/ratecounter"
-	"golang.org/x/net/context"
 )
 
 var (
-  counter        *ratecounter.RateCounter
-  hitsperminute = expvar.NewInt("hits_per_minute")
+	counter       *ratecounter.RateCounter
+	hitsperminute = expvar.NewInt("hits_per_minute")
 )
 
-type Server struct {
-	context.Context
-	httpctx.Handler
-}
-
-func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.Handler.ServeHTTP(s.Context, w, r)
-}
-
-func requestIDMiddleware(next httpctx.Handler) httpctx.Handler {
-	return httpctx.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func requestIDMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		if reqID, ok := requestid.FromRequest(r); ok == nil {
 			ctx = requestid.NewContext(ctx, reqID)
 		}
-		next.ServeHTTP(ctx, w, r)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-func requestCtrMiddleware(next httpctx.Handler) httpctx.Handler {
-	return httpctx.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		counter.Incr(1)
-		hitsperminute.Set(counter.Rate())
-		next.ServeHTTP(ctx, w, r)
-	})
-}
-
-func userIPMiddleware(next httpctx.Handler) httpctx.Handler {
-	return httpctx.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func userIPMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		if userIP, ok := userip.FromRequest(r); ok == nil {
 			ctx = userip.NewContext(ctx, userIP)
 		}
-		next.ServeHTTP(ctx, w, r)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-func requestHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	reqID, _ := requestid.FromContext(ctx)
-	userIP, _ := userip.FromContext(ctx)
+func requestCtrMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		counter.Incr(1)
+		hitsperminute.Set(counter.Rate())
+		next.ServeHTTP(w, r)
+	})
+}
+
+func reqHandler(w http.ResponseWriter, r *http.Request) {
+	reqID, _ := requestid.FromContext(r.Context())
+	userIP, _ := userip.FromContext(r.Context())
 	fmt.Fprintf(w, "Hello request: %s, from %s\n", reqID, userIP)
 }
 
@@ -66,20 +56,16 @@ func main() {
 	counter = ratecounter.NewRateCounter(1 * time.Minute)
 
 	port := os.Getenv("PORT")
-
 	if port == "" {
 		log.Fatal("$PORT must be set")
 	}
 
-	var handler httpctx.Handler
-	handler = httpctx.HandlerFunc(requestHandler)
-	handler = userIPMiddleware(handler)
-	handler = requestIDMiddleware(handler)
-	handler = requestCtrMiddleware(handler)
+	var h http.Handler
+	h = http.HandlerFunc(reqHandler)
+	h = userIPMiddleware(h)
+	h = requestIDMiddleware(h)
+	h = requestCtrMiddleware(h)
 
-	ctx := context.Background()
-	svc := &Server{ctx, handler}
-
-	http.HandleFunc("/", svc.ServeHTTP)
+	http.Handle("/", h)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }

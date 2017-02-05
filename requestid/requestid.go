@@ -1,14 +1,14 @@
 package requestid
 
 import (
+	"context"
 	"errors"
 	"net/http"
-
-	"golang.org/x/net/context"
 )
 
+// FromRequest request ID from http headers
 func FromRequest(req *http.Request) (string, error) {
-	requestID := req.Header.Get("X-Request-ID")
+	requestID := req.Header.Get("X-Request-Id")
 	if requestID == "" {
 		return "", errors.New("Request ID not provided")
 	}
